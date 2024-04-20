@@ -59,7 +59,6 @@ io.sockets.on('connection', (socket) => {
     });
 
     socket.on('start game', (room) => {
-        // console.log("start")
         let name = socketNames.get(socket.id)
         if (rooms.get(room)[0] == name) {
             io.to(room).emit('start game')

@@ -1,6 +1,6 @@
 
-socket = io.connect('https://floating-earth-49506-74598c9829a7.herokuapp.com/');
-// socket = io.connect('http://localhost:3000/');
+// socket = io.connect('https://floating-earth-49506-74598c9829a7.herokuapp.com/');
+socket = io.connect('http://localhost:3000/');
 const maxStringLength = 7;
 
 let canvas;
@@ -13,12 +13,20 @@ let messageStartFrame;
 let screen = "home"
 const strokeSize = 25;
 const backgroundColor = '#8fd3f5'
+let whiteBoardWidth = 600;
+let whiteBoardHeight = 600;
+let penDown = false;
+let buffer;
+let boardstartX = 250
+let boardstartY = 250
 
 function setup() {
     canvas = createCanvas(window.innerWidth, window.innerHeight)
     canvas.position(0, 0)
 
     startButtonY = height
+    boardstartX = width / 2 - whiteBoardWidth / 2
+    boardstartY = height / 2 - whiteBoardHeight / 2
 }
 
 function windowResized() {
@@ -127,7 +135,7 @@ function drawLobbyPage() {
     })
     text(txt, width / 2, height / 4)
     fill(255)
-    if (roomInfo.players.length < 3) {
+    if (roomInfo.players.length < 1) {
         text(`(${roomInfo.players.length}/3)`, width / 2, height * 3 / 4)
     } else {
         if (isHost()) {
@@ -140,11 +148,53 @@ function drawLobbyPage() {
     }
 }
 
+
 function drawGamePage() {
     background(backgroundColor)
     textOptions(width / 10)
-    text("game page", width / 2, height / 2)
+
+    erasing = false
+
+    if (penDown && isOnCanvas()) {
+        buffer.strokeWeight(10);
+        buffer.stroke(erasing ? 255 : 0);
+        let startX = max(min(mouseX - boardstartX, whiteBoardWidth - 10), 10); // Snap X coordinate to inside the rectangle
+        let startY = max(min(mouseY - boardstartY, whiteBoardHeight - 10), 10); // Snap Y coordinate to inside the rectangle
+        let endX = max(min(pmouseX - boardstartX, whiteBoardWidth - 10), 10); // Snap previous X coordinate to inside the rectangle
+        let endY = max(min(pmouseY - boardstartY, whiteBoardHeight - 10), 10); // Snap previous Y coordinate to inside the rectangle
+        buffer.line(startX, startY, endX, endY);
+    }
+
+    image(buffer, boardstartX, boardstartY);
 }
+
+function mousePressed() {
+    if (isOnCanvas()) {
+        penDown = true;
+    }
+}
+
+function mouseReleased() {
+    penDown = false;
+}
+
+function graphicsToBlob() {
+
+    //for canvas
+    let image64 = buffer.elt.toDataURL('image/png');
+    fetch(img_data)
+        .then(res => res.blob())
+        .then(function (newBlob) {
+            console.log(newBlob);
+
+        })
+}
+
+
+function isOnCanvas() {
+    return pmouseX >= boardstartX && pmouseX <= boardstartX + whiteBoardWidth && pmouseY >= boardstartY && pmouseY <= boardstartY + whiteBoardHeight;
+}
+
 
 function textWiggle(txt, x, y, size) {
     let len = txt.length
@@ -178,6 +228,10 @@ function button(txt, x, y, w, h, onClick) {
     if (mouseIsPressed && mouseX > x - w / 2 && mouseX < x + w / 2 && mouseY > y - h / 2 && mouseY < y + h / 2) {
         onClick()
     }
+}
+
+function imgButton(img, x, y, s, onClick) {
+
 }
 
 function newMessage(msg) {
@@ -287,4 +341,11 @@ socket.on('otherleft', (name) => {
 
 socket.on('start game', () => {
     screen = "game"
+
+    buffer = createGraphics(whiteBoardWidth, whiteBoardHeight);
+    buffer.background(255);
+    buffer.stroke(0);
+    buffer.strokeWeight(6);
+    buffer.noFill();
+    buffer.rect(0, 0, whiteBoardWidth, whiteBoardHeight);
 });

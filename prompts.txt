@@ -1,0 +1,26 @@
+airplane
+car
+dragon
+crocodile
+computer
+elephant
+flower
+guitar
+hamburger
+helicopter
+house
+hurricane
+jail
+keyboard
+leaf
+mermaid
+microwave
+monkey
+pants
+broccoli
+brain
+raccoon
+radio
+rifle
+sea turtle
+sink
