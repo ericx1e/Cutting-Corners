@@ -42,7 +42,7 @@ io.sockets.on('connection', (socket) => {
             socket.join(room);
             socketRooms.set(socket.id, room);
             socket.emit('created', room);
-        } else if (numClients < 4) {
+        } else if (numClients < 3) {
             let name = socketNames.get(socket.id)
             socket.emit('joined', room, rooms.get(room));
             rooms.get(room).push(name)
@@ -56,6 +56,14 @@ io.sockets.on('connection', (socket) => {
 
         console.log(socketRooms)
         console.log(rooms)
+    });
+
+    socket.on('start game', (room) => {
+        // console.log("start")
+        let name = socketNames.get(socket.id)
+        if (rooms.get(room)[0] == name) {
+            io.to(room).emit('start game')
+        }
     });
 
     socket.on('mouse', (data, room) => {

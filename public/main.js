@@ -7,7 +7,7 @@ let canvas;
 let playerInfo = { username: null, room: null }
 let roomInfo = { players: [] }
 let input = '';
-let isInputting = true;
+let isInputting = false;
 let message;
 let messageStartFrame;
 let screen = "home"
@@ -39,11 +39,14 @@ function draw() {
             drawHomePage();
             break;
         case "join":
-            drawJoinGamePage()
+            drawNamePage()
             break;
         case "lobby":
             drawLobbyPage()
             break;
+        case "game":
+            drawGamePage()
+            break
     }
     if (message) {
         showMessage()
@@ -81,7 +84,7 @@ function drawHomePage() {
     }
 }
 
-function drawJoinGamePage() {
+function drawNamePage() {
     background(backgroundColor)
     textAlign(CENTER, CENTER);
     textSize(width / 15);
@@ -111,10 +114,36 @@ function drawLobbyPage() {
     text("Room " + playerInfo.room, width / 2, height / 8)
     textSize(width / 25);
     fill(230);
-    text(roomInfo.players, width / 2, height / 4)
-    button("Start Game!", width / 2, width * 3 / 4, width / 4, width / 20, () => {
-        screen = "game"
+    let txt = ""
+    roomInfo.players.forEach((player, i) => {
+        if (i == 0) {
+            txt += player + " (host)"
+        } else {
+            txt += player
+        }
+        if (i < roomInfo.players.length - 1) {
+            txt += ",  "
+        }
     })
+    text(txt, width / 2, height / 4)
+    fill(255)
+    if (roomInfo.players.length < 3) {
+        text(`(${roomInfo.players.length}/3)`, width / 2, height * 3 / 4)
+    } else {
+        if (isHost()) {
+            button("Start Game!", width / 2, height * 3 / 4, width / 4, width / 20, () => {
+                socket.emit('start game', playerInfo.room)
+            })
+        } else {
+            text("Waiting for host", width / 2, height * 3 / 4)
+        }
+    }
+}
+
+function drawGamePage() {
+    background(backgroundColor)
+    textOptions(width / 10)
+    text("game page", width / 2, height / 2)
 }
 
 function textWiggle(txt, x, y, size) {
@@ -133,6 +162,10 @@ function textWiggle(txt, x, y, size) {
         pop()
     }
     pop()
+}
+
+function isHost() {
+    return roomInfo.players[0] == playerInfo.username
 }
 
 function button(txt, x, y, w, h, onClick) {
@@ -250,4 +283,8 @@ socket.on('otherleft', (name) => {
     }
     console.log(name, 'left the room');
     newMessage(name + ' left the room');
+});
+
+socket.on('start game', () => {
+    screen = "game"
 });
