@@ -12,6 +12,7 @@ var io = require('socket.io')(server);
 
 let connections = 0
 
+let rooms = new Map();
 let socketNames = new Map();
 let socketRooms = new Map();
 
@@ -21,8 +22,8 @@ io.sockets.on('connection', (socket) => {
     console.log("number of connections: " + connections);
 
     socket.on('new name', (name) => {
-        console.log(name)
         socketNames.set(socket.id, name);
+        console.log(socketNames)
     });
 
     socket.on('create or join', (room) => {
@@ -38,31 +39,43 @@ io.sockets.on('connection', (socket) => {
 
         if (numClients === 0) {
             rooms.set(room, [socketNames.get(socket.id)]);
-            turns.set(room, 0);
-            isPlaying.set(room, false);
             socket.join(room);
             socketRooms.set(socket.id, room);
             socket.emit('created', room);
-            totalTiles.set(room, []);
-            playedTiles.set(room, []);
         } else if (numClients < 4) {
+            let name = socketNames.get(socket.id)
             socket.emit('joined', room, rooms.get(room));
-            let temp = rooms.get(room);
-            temp.push(socketNames.get(socket.id));
-            rooms.set(room, temp);
-            io.sockets.in(room).emit('join', room);
+            rooms.get(room).push(name)
+            // io.sockets.in(room).emit('join', room);
             socket.join(room);
             socketRooms.set(socket.id, room);
-            io.to(room).emit('otherjoined', socketNames.get(socket.id));
+            io.to(room).emit('otherjoined', name);
         } else {
             socket.emit("full", room)
         }
+
+        console.log(socketRooms)
+        console.log(rooms)
     });
 
+    socket.on('mouse', (data, room) => {
+        io.to(room).emit('draw', data);
+    });
 
-    socket.on('disconnect', disconnected);
-    function disconnected() {
+    socket.on('disconnect', () => {
         console.log(socket.id + ' disconnected');
         connections--;
-    }
+        console.log("number of connections: " + connections);
+        if (socketNames.has(socket.id)) {
+            let name = socketNames.get(socket.id);
+            socketNames.delete(socket.id)
+            if (socketRooms.has(socket.id)) {
+                let room = socketRooms.get(socket.id);
+                io.to(room).emit('otherleft', name);
+                rooms.get(room).splice(room.indexOf(name), 1);
+                socketRooms.delete(socket.id);
+            }
+        }
+        console.log(socketNames);
+    });
 })
