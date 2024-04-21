@@ -1,5 +1,6 @@
 import torch.nn as nn
 import torch
+import torch.nn.functional as F
 
 reversed_encoding = {
         0: 'airplane',
@@ -28,6 +29,7 @@ reversed_encoding = {
         23: 'rifle',
         24: 'sink'
     }
+
 
 class ImageClassifier(nn.Module):
     def __init__(self):
@@ -60,4 +62,7 @@ class ImageClassifier(nn.Module):
     def predict(self, x):
         x = torch.reshape(x, (1, 1, 28, 28))
         output = self.forward(x)
-        return reversed_encoding[torch.argmax(output, dim=1).item()]
+        softmax_tensor = F.softmax(output, dim=1).detach()
+        print(softmax_tensor)
+        return reversed_encoding[torch.argmax(output, dim=1).item()], softmax_tensor[
+            0, torch.argmax(output, dim=1).item()].item()
