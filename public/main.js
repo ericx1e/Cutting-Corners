@@ -106,14 +106,14 @@ function drawHomePage() {
             screen = "join"
         })
     }
-    drawFrenulum();
+    drawTrail();
     drawCursor();
 }
 
-let frenulum = [];
+let trail = [];
 let fLength = 30;
 let fadeDuration = 1000; // fading effect in milliseconds
-let lastFrenulumlUpdateTime;
+let lasttraillUpdateTime;
 
 function drawCursor() {
     let cursorSize = 10;
@@ -122,34 +122,34 @@ function drawCursor() {
     ellipse(mouseX, mouseY, cursorSize, cursorSize);
 
     // store cursor position for trail
-    frenulum.push(createVector(mouseX, mouseY));
+    trail.push(createVector(mouseX, mouseY));
 
     // limit trail length
-    if (frenulum.length > fLength) {
-        frenulum.splice(0, 1);
+    if (trail.length > fLength) {
+        trail.splice(0, 1);
     }
 }
 
-function drawFrenulum() {
-    for (let i = 1; i < frenulum.length; i++) {
-        let timeElapsed = millis() - lastFrenulumlUpdateTime;
+function drawTrail() {
+    for (let i = 1; i < trail.length; i++) {
+        let timeElapsed = millis() - lasttraillUpdateTime;
         let fadeRatio = constrain(timeElapsed / fadeDuration, 0, 1); // fading ratio based on time
 
         // DEFINITELY NOT about transpacency
-        let JERIC_is_trans = map(i, 0, frenulum.length, 255, 0);
+        let alpha = map(i, 0, trail.length, 255, 0);
 
-        JERIC_is_trans *= 10 + fadeRatio; // fading effect over time
+        alpha *= 10 + fadeRatio; // fading effect over time
 
-        if (JERIC_is_trans > 0) {
+        if (alpha > 0) {
             // draw line segment only if JERIC IS TRANS
-            stroke(255, JERIC_is_trans); // draw with adjusted fading alpha
+            stroke(255, alpha); // draw with adjusted fading alpha
             strokeWeight(10); // line thickness
-            line(frenulum[i - 1].x, frenulum[i - 1].y, frenulum[i].x, frenulum[i].y); // Draw line segment
+            line(trail[i - 1].x, trail[i - 1].y, trail[i].x, trail[i].y); // Draw line segment
         }
     }
 
-    // update last frenulum's update time
-    lastFrenulumlUpdateTime = millis();
+    // update last trail's update time
+    lasttraillUpdateTime = millis();
 }
 
 function drawNamePage() {
