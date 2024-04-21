@@ -19,7 +19,7 @@ fs.readFile('prompts.txt', (err, data) => {
 
 let connections = 0
 
-const maxPlayers = 4
+const maxPlayers = 2
 const drawTime = 10 * 1000 // Millis
 
 let rooms = new Map();
@@ -91,7 +91,8 @@ io.sockets.on('connection', (socket) => {
     socket.on('first round', (base64Image) => {
         let room = socketRooms.get(socket.id)
         let index = rooms.get(room).indexOf(socketNames.get(socket.id))
-        roomImageData.get(room)[index] = base64Image
+        console.log(roomImageData.get(room));
+        roomImageData.get(room)[index] = [base64Image]
 
         // Check if room is done
         let isDone = true
@@ -110,12 +111,13 @@ io.sockets.on('connection', (socket) => {
     socket.on('second round', (base64Image) => {
         let room = socketRooms.get(socket.id)
         let index = rooms.get(room).indexOf(socketNames.get(socket.id))
-        roomImageData.get(room)[index] = base64Image
+        console.log(roomImageData.get(room));
+        roomImageData.get(room)[index].append(base64Image)
 
         // Check if room is done
         let isDone = true
         for (let i = 0; i < maxPlayers; i++) {
-            if (roomImageData.get(room)[i] == null) {
+            if (roomImageData.get(room)[i].length == 1) {
                 isDone = false
             }
         }
@@ -129,12 +131,12 @@ io.sockets.on('connection', (socket) => {
     socket.on('third round', (base64Image) => {
         let room = socketRooms.get(socket.id)
         let index = rooms.get(room).indexOf(socketNames.get(socket.id))
-        roomImageData.get(room)[index] = base64Image
+        roomImageData.get(room)[index].append(base64Image)
 
         // Check if room is done
         let isDone = true
         for (let i = 0; i < maxPlayers; i++) {
-            if (roomImageData.get(room)[i] == null) {
+            if (roomImageData.get(room)[i].length == 2) {
                 isDone = false
             }
         }

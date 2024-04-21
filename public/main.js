@@ -1,8 +1,8 @@
 
-socket = io.connect('https://floating-earth-49506-74598c9829a7.herokuapp.com/');
-// socket = io.connect('http://localhost:3000/');
+// socket = io.connect('https://floating-earth-49506-74598c9829a7.herokuapp.com/');
+socket = io.connect('http://localhost:3000/');
 const maxStringLength = 7;
-const maxPlayers = 4
+const maxPlayers = 2
 
 let canvas;
 let playerInfo = { username: null, room: null, prompt: null, index: null, second_round_image: null, third_round_image: null, fourth_round_image: null }
@@ -205,23 +205,24 @@ function drawGamePage() {
         textOptions(width / 20)
         text("Draw a\n" + playerInfo.prompt, width * 8.5 / 10, height / 6)
     } else {
+        let i = (playerInfo.index + round - 1) % maxPlayers
         switch (round) {
             case 2:
                 // console.log(playerInfo.second_round_image)
-                image(playerInfo.second_round_image[(playerInfo.index + 1) % maxPlayers], referenceX, referenceY, referenceW, referenceH)
+                image(playerInfo.second_round_image[i][0], referenceX, referenceY, referenceW, referenceH)
                 break;
             case 3:
-                image(playerInfo.second_round_image[(playerInfo.index + 2) % maxPlayers], referenceX, referenceY, referenceW, referenceH)
-                image(playerInfo.third_round_image[(playerInfo.index + 1) % maxPlayers], referenceX + referenceW, referenceY, referenceW, referenceH)
+                image(playerInfo.third_round_image[i][0], referenceX, referenceY, referenceW, referenceH)
+                image(playerInfo.third_round_image[i][1], referenceX + referenceW, referenceY, referenceW, referenceH)
 
                 // image(playerInfo.third_round_image, referenceX, referenceY, referenceW, referenceH)
                 // image(playerInfo.third_round_image[0], referenceX, referenceY, referenceW, referenceH)
                 // image(playerInfo.third_round_image[1], referenceX + referenceW, referenceY, referenceW, referenceH)
                 break;
             case 4:
-                image(playerInfo.second_round_image[(playerInfo.index + 3) % maxPlayers], referenceX, referenceY, referenceW, referenceH)
-                image(playerInfo.third_round_image[(playerInfo.index + 2) % maxPlayers], referenceX + referenceW, referenceY, referenceW, referenceH)
-                image(playerInfo.fourth_round_image[(playerInfo.index + 1) % maxPlayers], referenceX, referenceY + referenceH, referenceW, referenceH)
+                image(playerInfo.fourth_round_image[i][0], referenceX, referenceY, referenceW, referenceH)
+                image(playerInfo.fourth_round_image[i][1], referenceX + referenceW, referenceY, referenceW, referenceH)
+                image(playerInfo.fourth_round_image[i][2], referenceX, referenceY + referenceH, referenceW, referenceH)
                 break;
         }
     }
@@ -396,8 +397,14 @@ socket.on('start game', (prompts) => {
 
 socket.on('second round', (images) => {
     playerInfo.second_round_image = []
-    images.forEach((img) => {
-        playerInfo.second_round_image.push(loadImage(img))
+    images.forEach((row) => {
+        arr = []
+        row.forEach(
+            (col) => {
+                arr.push(loadImage(col))
+            }
+        )
+        playerInfo.second_round_image.push(arr)
     })
 
 
@@ -410,10 +417,15 @@ socket.on('second round', (images) => {
 
 socket.on('third round', (images) => {
     playerInfo.third_round_image = []
-    images.forEach((img) => {
-        playerInfo.third_round_image.push(loadImage(img))
+    images.forEach((row) => {
+        arr = []
+        row.forEach(
+            (col) => {
+                arr.push(loadImage(col))
+            }
+        )
+        playerInfo.third_round_image.push(arr)
     })
-
     // index = roomInfo.players.indexOf(playerInfo.username)
     // playerInfo.second_round_image = images[(index + 1) % maxPlayers]
     // playerInfo.third_round_image = loadImage(images[(index + 1) % maxPlayers])
@@ -423,8 +435,14 @@ socket.on('third round', (images) => {
 
 socket.on('fourth round', (images) => {
     playerInfo.fourth_round_image = []
-    images.forEach((img) => {
-        playerInfo.fourth_round_image.push(loadImage(img))
+    images.forEach((row) => {
+        arr = []
+        row.forEach(
+            (col) => {
+                arr.push(loadImage(col))
+            }
+        )
+        playerInfo.fourth_round_image.push(arr)
     })
 
     // index = roomInfo.players.indexOf(playerInfo.username)
