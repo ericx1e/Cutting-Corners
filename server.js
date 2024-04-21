@@ -1,10 +1,12 @@
 const fs = require('fs');
+const cors = require('cors');
 const fetch = require('node-fetch')
 var express = require("express");
-const { log } = require('console');
 var app = express();
 var server = app.listen(process.env.PORT || 3000);
 app.use(express.static('public'));
+
+app.use(cors());
 
 console.log("Server is running");
 
