@@ -1,24 +1,33 @@
 
-// socket = io.connect('https://floating-earth-49506-74598c9829a7.herokuapp.com/');
-socket = io.connect('http://localhost:3000/');
+socket = io.connect('https://floating-earth-49506-74598c9829a7.herokuapp.com/');
+// socket = io.connect('http://localhost:3000/');
 const maxStringLength = 7;
+const maxPlayers = 4
 
 let canvas;
-let playerInfo = { username: null, room: null }
+let playerInfo = { username: null, room: null, prompt: null, index: null, second_round_image: null, third_round_image: null, fourth_round_image: null }
 let roomInfo = { players: [] }
 let input = '';
 let isInputting = false;
 let message;
 let messageStartFrame;
 let screen = "home"
-const strokeSize = 25;
+const penSize = 10;
 const backgroundColor = '#8fd3f5'
 let whiteBoardWidth = 600;
 let whiteBoardHeight = 600;
+let compressedSize = 50;
 let penDown = false;
 let buffer;
 let boardstartX = 250
 let boardstartY = 250
+let isErasing = false
+
+let drawingStartTime = 0
+let drawingEndTime = 0
+let timerRunning = false
+
+let round = -1
 
 function setup() {
     canvas = createCanvas(window.innerWidth, window.innerHeight)
@@ -38,6 +47,8 @@ function windowResized() {
 
 function preload() {
     pangolin = loadFont('/assets/fonts/Pangolin/Pangolin-Regular.ttf');
+    eraserImg = loadImage('/assets/eraser.png');
+    pencilImg = loadImage('/assets/pencil.png');
 }
 
 function draw() {
@@ -148,28 +159,110 @@ function drawLobbyPage() {
     }
 }
 
-
 function drawGamePage() {
     background(backgroundColor)
     textOptions(width / 10)
 
-    erasing = false
-
     if (penDown && isOnCanvas()) {
-        buffer.strokeWeight(10);
-        buffer.stroke(erasing ? 255 : 0);
-        let startX = max(min(mouseX - boardstartX, whiteBoardWidth - 10), 10); // Snap X coordinate to inside the rectangle
-        let startY = max(min(mouseY - boardstartY, whiteBoardHeight - 10), 10); // Snap Y coordinate to inside the rectangle
-        let endX = max(min(pmouseX - boardstartX, whiteBoardWidth - 10), 10); // Snap previous X coordinate to inside the rectangle
-        let endY = max(min(pmouseY - boardstartY, whiteBoardHeight - 10), 10); // Snap previous Y coordinate to inside the rectangle
+        let curPenSize
+        if (isErasing) {
+            curPenSize = 3 * penSize
+        } else {
+            curPenSize = penSize
+        }
+        buffer.strokeWeight(curPenSize);
+        buffer.stroke(isErasing ? 255 : 0);
+        let padding = curPenSize / 2 + 3
+        let startX = max(min(mouseX - boardstartX, whiteBoardWidth - padding), padding); // Snap X coordinate to inside the rectangle
+        let startY = max(min(mouseY - boardstartY, whiteBoardHeight - padding), padding); // Snap Y coordinate to inside the rectangle
+        let endX = max(min(pmouseX - boardstartX, whiteBoardWidth - padding), padding); // Snap previous X coordinate to inside the rectangle
+        let endY = max(min(pmouseY - boardstartY, whiteBoardHeight - padding), padding); // Snap previous Y coordinate to inside the rectangle
         buffer.line(startX, startY, endX, endY);
     }
 
+    imageMode(CORNER)
+    noStroke()
+    fill(100, 50)
+    rectMode(CORNER)
+    let dropShadowOffset = width / 100
+    rect(boardstartX + dropShadowOffset, boardstartY + dropShadowOffset, whiteBoardWidth, whiteBoardHeight)
     image(buffer, boardstartX, boardstartY);
+
+    imgButton(pencilImg, width / 10, height / 3, width / 10, !isErasing, () => {
+        isErasing = false
+    })
+
+    imgButton(eraserImg, width / 10, height * 2 / 3, width / 10, isErasing, () => {
+        isErasing = true
+    })
+
+    let referenceX = width * 8.5 / 10
+    let referenceY = height / 6
+    let referenceW = width / 10
+    let referenceH = width / 10
+
+    if (round == 1) {
+        textOptions(width / 20)
+        text("Draw a\n" + playerInfo.prompt, width * 8.5 / 10, height / 6)
+    } else {
+        switch (round) {
+            case 2:
+                // console.log(playerInfo.second_round_image)
+                image(playerInfo.second_round_image[(playerInfo.index + 1) % maxPlayers], referenceX, referenceY, referenceW, referenceH)
+                break;
+            case 3:
+                image(playerInfo.second_round_image[(playerInfo.index + 2) % maxPlayers], referenceX, referenceY, referenceW, referenceH)
+                image(playerInfo.third_round_image[(playerInfo.index + 1) % maxPlayers], referenceX + referenceW, referenceY, referenceW, referenceH)
+
+                // image(playerInfo.third_round_image, referenceX, referenceY, referenceW, referenceH)
+                // image(playerInfo.third_round_image[0], referenceX, referenceY, referenceW, referenceH)
+                // image(playerInfo.third_round_image[1], referenceX + referenceW, referenceY, referenceW, referenceH)
+                break;
+            case 4:
+                image(playerInfo.second_round_image[(playerInfo.index + 3) % maxPlayers], referenceX, referenceY, referenceW, referenceH)
+                image(playerInfo.third_round_image[(playerInfo.index + 2) % maxPlayers], referenceX + referenceW, referenceY, referenceW, referenceH)
+                image(playerInfo.fourth_round_image[(playerInfo.index + 1) % maxPlayers], referenceX, referenceY + referenceH, referenceW, referenceH)
+                break;
+        }
+    }
+    // Timer 
+    if (timerRunning) {
+        let x = map(Date.now(), drawingStartTime, drawingEndTime, boardstartX, boardstartX + whiteBoardWidth)
+        stroke(255)
+        strokeWeight(width / 40)
+        line(boardstartX, boardstartY / 2, boardstartX + boardstartX + whiteBoardWidth - x, boardstartY / 2)
+
+        if (Date.now() > drawingEndTime) {
+            let base64Image
+            console.log(round);
+            switch (round) {
+                case 1:
+                    base64Image = buffer.get(3, 3, whiteBoardWidth / 2, whiteBoardHeight / 2).canvas.toDataURL();
+                    socket.emit('first round', base64Image)
+                    timerRunning = false
+                    break;
+                case 2:
+                    base64Image = buffer.get(3, 3, whiteBoardWidth, whiteBoardHeight).canvas.toDataURL();
+                    socket.emit('second round', base64Image)
+                    timerRunning = false
+                    break;
+                case 3:
+                    base64Image = buffer.get(3, 3, whiteBoardWidth, whiteBoardHeight).canvas.toDataURL();
+                    socket.emit('third round', base64Image)
+                    timerRunning = false
+                    break;
+                case 4:
+                    base64Image = buffer.get(3, 3, whiteBoardWidth, whiteBoardHeight).canvas.toDataURL();
+                    socket.emit('fourth round', base64Image)
+                    timerRunning = false
+                    break;
+            }
+        }
+    }
 }
 
 function mousePressed() {
-    if (isOnCanvas()) {
+    if (screen == "game" && isOnCanvas()) {
         penDown = true;
     }
 }
@@ -179,22 +272,12 @@ function mouseReleased() {
 }
 
 function graphicsToBlob() {
-
-    //for canvas
-    let image64 = buffer.elt.toDataURL('image/png');
-    fetch(img_data)
-        .then(res => res.blob())
-        .then(function (newBlob) {
-            console.log(newBlob);
-
-        })
+    return buffer.elt.toDataURL('image/png');
 }
-
 
 function isOnCanvas() {
     return pmouseX >= boardstartX && pmouseX <= boardstartX + whiteBoardWidth && pmouseY >= boardstartY && pmouseY <= boardstartY + whiteBoardHeight;
 }
-
 
 function textWiggle(txt, x, y, size) {
     let len = txt.length
@@ -230,8 +313,22 @@ function button(txt, x, y, w, h, onClick) {
     }
 }
 
-function imgButton(img, x, y, s, onClick) {
-
+function imgButton(img, x, y, s, isHighlighted, onClick) {
+    imageMode(CENTER)
+    rectMode(CENTER)
+    noFill()
+    if (isHighlighted) {
+        stroke(255, 100, 100)
+        strokeWeight(s / 20)
+    } else {
+        stroke(0)
+        strokeWeight(s / 150)
+    }
+    image(img, x, y, s, s)
+    rect(x, y, s, s)
+    if (mouseIsPressed && mouseX > x - s / 2 && mouseX < x + s / 2 && mouseY > y - s / 2 && mouseY < y + s / 2) {
+        onClick()
+    }
 }
 
 function newMessage(msg) {
@@ -281,26 +378,75 @@ function lerp(start, end, amt) {
 }
 
 
-function mouseDragged() {
-    socket.emit('mouse', { mouseX, mouseY }, playerInfo.room)
-}
 
-// socket.on('mouse', (data) => {
-//     noStroke()
-//     fill(255, 230, 230)
-//     ellipse(data.x, data.y, strokeSize)
-// });
-
-socket.on('draw', (data) => {
-    noStroke()
-    fill(255, 255, 255)
-    ellipse(data.mouseX, data.mouseY, strokeSize)
-})
-
-socket.on('players', (data) => {
-
+socket.on('start game', (prompts) => {
+    screen = "game"
+    message = ''
+    buffer = createGraphics(whiteBoardWidth, whiteBoardHeight);
+    buffer.background(255);
+    buffer.stroke(0);
+    buffer.strokeWeight(6);
+    buffer.noFill();
+    buffer.rect(0, 0, whiteBoardWidth, whiteBoardHeight);
+    index = roomInfo.players.indexOf(playerInfo.username)
+    playerInfo.prompt = prompts[index]
+    playerInfo.index = roomInfo.players.indexOf(playerInfo.username)
+    round = 1
 });
 
+socket.on('second round', (images) => {
+    playerInfo.second_round_image = []
+    images.forEach((img) => {
+        playerInfo.second_round_image.push(loadImage(img))
+    })
+
+
+    // index = roomInfo.players.indexOf(playerInfo.username)
+    // playerInfo.second_round_image = loadImage(images[(index + 1) % maxPlayers])
+
+    buffer.background(255);
+    round = 2
+});
+
+socket.on('third round', (images) => {
+    playerInfo.third_round_image = []
+    images.forEach((img) => {
+        playerInfo.third_round_image.push(loadImage(img))
+    })
+
+    // index = roomInfo.players.indexOf(playerInfo.username)
+    // playerInfo.second_round_image = images[(index + 1) % maxPlayers]
+    // playerInfo.third_round_image = loadImage(images[(index + 1) % maxPlayers])
+    buffer.background(255);
+    round = 3
+});
+
+socket.on('fourth round', (images) => {
+    playerInfo.fourth_round_image = []
+    images.forEach((img) => {
+        playerInfo.fourth_round_image.push(loadImage(img))
+    })
+
+    // index = roomInfo.players.indexOf(playerInfo.username)
+    // playerInfo.second_round_image = images[(index + 1) % maxPlayers]
+    // playerInfo.third_round_image = loadImage(images[(index + 1) % maxPlayers])
+    buffer.background(255);
+    round = 4
+});
+
+// socket.on('fourth round', (images) => {
+//     index = roomInfo.players.indexOf(playerInfo.username)
+//     // playerInfo.second_round_image = images[(index + 1) % maxPlayers]
+//     playerInfo.fourth_round_image = [eraserImg, eraserImg, eraserImg]
+//     buffer.background(255);
+//     round = 4
+// });
+
+socket.on('begin timer', (times) => {
+    drawingStartTime = times[0]
+    drawingEndTime = times[1]
+    timerRunning = true
+});
 
 // Room stuff
 socket.on('created', (room) => {
@@ -337,15 +483,4 @@ socket.on('otherleft', (name) => {
     }
     console.log(name, 'left the room');
     newMessage(name + ' left the room');
-});
-
-socket.on('start game', () => {
-    screen = "game"
-
-    buffer = createGraphics(whiteBoardWidth, whiteBoardHeight);
-    buffer.background(255);
-    buffer.stroke(0);
-    buffer.strokeWeight(6);
-    buffer.noFill();
-    buffer.rect(0, 0, whiteBoardWidth, whiteBoardHeight);
 });
