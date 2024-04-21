@@ -86,9 +86,23 @@ function textOptions(size) {
     // stroke('#ea966f')
 }
 
+function drawBackground() {
+    c1 = color(backgroundColor);
+    c2 = color(63, 191, 191);
+
+    for (let y = 0; y < height; y++) {
+        n = map(y, 0, height, 0, 1);
+        let newc = lerpColor(c1, c2, n);
+        stroke(newc);
+        line(0, y, width, y);
+    }
+}
+
 let startButtonY
 function drawHomePage() {
-    background(backgroundColor)
+    //background(backgroundColor)
+    drawBackground()
+    // noStroke()
     textOptions(width / 10)
     textWiggle('Cutting Corners', width / 2, height / 4, width / 10)
 
@@ -115,8 +129,8 @@ function drawHomePage() {
 }
 
 let trail = [];
-let fLength = 30;
-let fadeDuration = 1000; // fading effect in milliseconds
+let fLength = 10;
+let fadeDuration = 500; // fading effect in milliseconds
 let lasttraillUpdateTime;
 
 function drawCursor() {
@@ -145,7 +159,6 @@ function drawTrail() {
         alpha *= 10 + fadeRatio; // fading effect over time
 
         if (alpha > 0) {
-            // draw line segment only if JERIC IS TRANS
             stroke(255, alpha); // draw with adjusted fading alpha
             strokeWeight(10); // line thickness
             line(trail[i - 1].x, trail[i - 1].y, trail[i].x, trail[i].y); // Draw line segment
@@ -157,7 +170,8 @@ function drawTrail() {
 }
 
 function drawNamePage() {
-    background(backgroundColor)
+    //background(backgroundColor)
+    drawBackground()
     textAlign(CENTER, CENTER);
     textSize(width / 15);
     fill(255);
@@ -165,12 +179,14 @@ function drawNamePage() {
     isInputting = true
     if (playerInfo.username == null) {
         text("Enter your name:", width / 2, height / 3);
-        fill(220)
+        noStroke()
+        fill(255)
         text(input, width / 2, height / 2);
         return;
     } else if (playerInfo.room == null) {
         text("Enter a room name:", width / 2, height / 3);
-        fill(220)
+        noStroke()
+        fill(255)
         text(input, width / 2, height / 2);
         return;
     }
@@ -179,13 +195,15 @@ function drawNamePage() {
 }
 
 function drawLobbyPage() {
-    background(backgroundColor)
+    //background(backgroundColor)
+    drawBackground()
     textAlign(CENTER, CENTER);
     textSize(width / 15);
     fill(255);
     text("Room " + playerInfo.room, width / 2, height / 8)
     textSize(width / 25);
-    fill(230);
+    fill(255);
+    noStroke()
     let txt = ""
     roomInfo.players.forEach((player, i) => {
         if (i == 0) {
@@ -213,7 +231,8 @@ function drawLobbyPage() {
 }
 
 function drawGamePage() {
-    background(backgroundColor)
+    //background(backgroundColor)
+    drawBackground()
     textOptions(width / 10)
 
     if (penDown && isOnCanvas()) {
@@ -261,6 +280,7 @@ function drawGamePage() {
 
     if (round == 1) {
         textOptions(width / 20)
+        noStroke()
         text("Draw a\n" + playerInfo.prompt, width * 8.5 / 10, height / 6)
     } else {
         noStroke()
@@ -304,8 +324,10 @@ function drawGamePage() {
     // Timer 
     if (timerRunning) {
         let x = map(Date.now(), drawingStartTime, drawingEndTime, boardstartX, boardstartX + whiteBoardWidth)
-        stroke(255)
-        strokeWeight(width / 40)
+        colorMode(HSB)
+        stroke(map(x, boardstartX, boardstartX + whiteBoardWidth, 120, 0), 255, 255)
+        colorMode(RGB)
+        strokeWeight(width / 50)
         line(boardstartX, boardstartY / 2, boardstartX + boardstartX + whiteBoardWidth - x, boardstartY / 2)
 
         if (Date.now() > drawingEndTime) {
@@ -342,9 +364,10 @@ let changeInterval = 10 * 1000;
 let lastChangedTime = 0;
 
 function drawEndPage() {
-    background(backgroundColor)
+    //background(backgroundColor)
+    drawBackground()
     textOptions(width / 15)
-    textWiggle("Let's rate those masterpieces!", width / 2, height / 8, width / 30)
+    textWiggle("Let's look at those masterpieces!", width / 2, height / 8, width / 30)
     imageMode(CENTER)
     image(wabbitImg, width * 9 / 10, height * 9 / 10)
     image(finalImages[finalI], width / 2, height / 2, whiteBoardWidth * 2 / 3, whiteBoardHeight * 2 / 3);
@@ -429,7 +452,7 @@ function imgButton(img, x, y, s, isHighlighted, onClick) {
     rectMode(CENTER)
     noFill()
     if (isHighlighted) {
-        stroke(255, 100, 100)
+        stroke(255, 150, 100)
         strokeWeight(s / 20)
     } else {
         stroke(0)
@@ -456,6 +479,7 @@ function showMessage() {
     textAlign(CENTER, CENTER);
     textSize(50);
     fill(255, 255 - n);
+    noStroke()
     text(message, width / 2, height / 3 - n / 10);
     pop();
 }
