@@ -1,8 +1,8 @@
 
-// socket = io.connect('https://floating-earth-49506-74598c9829a7.herokuapp.com/');
-socket = io.connect('http://localhost:3000/');
+socket = io.connect('https://floating-earth-49506-74598c9829a7.herokuapp.com/');
+// socket = io.connect('http://localhost:3000/');
 const maxStringLength = 7;
-const maxPlayers = 2
+const maxPlayers = 4
 
 let canvas;
 let playerInfo = { username: null, room: null, prompt: null, index: null, second_round_image: null, third_round_image: null, fourth_round_image: null }
