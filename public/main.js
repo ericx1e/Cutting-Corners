@@ -311,7 +311,7 @@ function drawGamePage() {
         isErasing = true
     })
 
-    let referenceX = width * 8.5 / 10
+    let referenceX = width * 8 / 10
     let referenceY = height / 6
     let referenceW = width / 10
     let referenceH = width / 10
