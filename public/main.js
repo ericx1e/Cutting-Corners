@@ -199,8 +199,8 @@ function drawLobbyPage() {
     })
     text(txt, width / 2, height / 4)
     fill(255)
-    if (roomInfo.players.length < 1) {
-        text(`(${roomInfo.players.length}/3)`, width / 2, height * 3 / 4)
+    if (roomInfo.players.length < maxPlayers) {
+        text(`(${roomInfo.players.length}/4)`, width / 2, height * 3 / 4)
     } else {
         if (isHost()) {
             button("Start Game!", width / 2, height * 3 / 4, width / 4, width / 20, () => {
@@ -314,7 +314,7 @@ function drawGamePage() {
             switch (round) {
                 case 1:
                     base64Image = buffer.get(3, 3, whiteBoardWidth / 2, whiteBoardHeight / 2).canvas.toDataURL();
-                    socket.emit('first round', base64Image)
+                    socket.emit('first round', [base64Image, playerInfo.prompt])
                     timerRunning = false
                     break;
                 case 2:
@@ -348,10 +348,15 @@ function drawEndPage() {
     imageMode(CENTER)
     image(wabbitImg, width * 9 / 10, height * 9 / 10)
     image(finalImages[finalI], width / 2, height / 2, whiteBoardWidth * 2 / 3, whiteBoardHeight * 2 / 3);
+    socket.emit('leave room', playerInfo.room)
+    playerInfo = { username: null, room: null, prompt: null, index: null, second_round_image: null, third_round_image: null, fourth_round_image: null }
+    roomInfo = { players: [] }
+    playerInfo.room = null
+
     let p = actual_prompts[finalI]
     let guess = finalClassifications[finalI][0]
-    let confidence = Math.floor(finalClassifications[finalI][1] * 100)
-    text(`Actual: ${p}, Guess: ${guess} at ${confidence}%`, width / 2, height * 5 / 6)
+    // let confidence = Math.floor(finalClassifications[finalI][1] * 100)
+    text(`Actual: ${p}, Guess: ${guess}`, width / 2, height * 5 / 6)
 
     // Check if it's time to change the image
     if (millis() - lastChangedTime > changeInterval) {
@@ -484,7 +489,6 @@ function lerp(start, end, amt) {
 }
 
 
-
 socket.on('start game', (prompts) => {
     screen = "game"
     message = ''
@@ -495,8 +499,8 @@ socket.on('start game', (prompts) => {
     buffer.noFill();
     buffer.rect(0, 0, whiteBoardWidth, whiteBoardHeight);
     index = roomInfo.players.indexOf(playerInfo.username)
-    playerInfo.prompt = prompts[index]
     playerInfo.index = roomInfo.players.indexOf(playerInfo.username)
+    playerInfo.prompt = prompts[playerInfo.index]
     round = 1
 });
 

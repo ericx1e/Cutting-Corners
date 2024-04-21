@@ -23,13 +23,13 @@ fs.readFile('prompts.txt', (err, data) => {
 let connections = 0
 
 const maxPlayers = 4
-const drawTime = 15 * 1000 // Millis
+const drawTime = 5 * 1000 // Millis
 
 let rooms = new Map();
 let socketNames = new Map();
 let socketRooms = new Map();
-let prompts = new Map();
 let roomImageData = new Map();
+let roomPrompts = new Map();
 
 io.sockets.on('connection', (socket) => {
     console.log('new connection ' + socket.id);
@@ -77,24 +77,28 @@ io.sockets.on('connection', (socket) => {
         let name = socketNames.get(socket.id)
         if (rooms.get(room)[0] == name) {
             let p = []
-            console.log(all_prompts)
+            // console.log(all_prompts)
             while (p.length < maxPlayers) {
                 let e = all_prompts[Math.floor(all_prompts.length * Math.random())]
                 if (!p.includes(e)) {
                     p.push(e)
                 }
             }
-            prompts.set(room, p)
+
             roomImageData.set(room, Array.from(Array.apply(null, Array(maxPlayers)).map(function () { })))
+            roomPrompts.set(room, Array.from(Array.apply(null, Array(maxPlayers)).map(function () { })))
             io.to(room).emit('start game', p)
             io.to(room).emit('begin timer', [Date.now(), Date.now() + drawTime])
         }
     });
 
-    socket.on('first round', (base64Image) => {
+    socket.on('first round', (data) => {
+        let base64Image = data[0]
+        let prompt = data[1]
         let room = socketRooms.get(socket.id)
         let index = rooms.get(room).indexOf(socketNames.get(socket.id))
         roomImageData.get(room)[index] = [base64Image]
+        roomPrompts.get(room)[index] = [prompt]
 
         // Check if room is done
         let isDone = true
@@ -164,11 +168,9 @@ io.sockets.on('connection', (socket) => {
         if (isDone) {
             const images = [];
             const classifications = [];
-            let p = prompts.get(room)
+            const p = []
 
-            const promises = roomImageData.get(room).map(async (ele) => {
-                console.log(ele[0])
-                console.log(ele[1])
+            const promises = roomImageData.get(room).map(async (ele, i) => {
                 try {
                     // First API call to combine images
                     const combineResponse = await fetch('https://fastapi-production-af2a.up.railway.app/api/v1/drawing/combine', {
@@ -200,6 +202,7 @@ io.sockets.on('connection', (socket) => {
                     // Store the combined image data and the classification result
                     images.push("data:image/png;base64," + combinedjson);
                     classifications.push(result);
+                    p.push(roomPrompts.get(room)[i])
                 } catch (error) {
                     console.error('Error:', error);
                 }
@@ -210,6 +213,10 @@ io.sockets.on('connection', (socket) => {
 
             // Emit the end screen event after all images and classifications are processed
             io.to(room).emit('end screen', [images, classifications, p]);
+
+            roomPrompts.delete(room)
+            roomImageData.delete(room)
+            rooms.delete(room)
 
 
 
@@ -267,6 +274,11 @@ io.sockets.on('connection', (socket) => {
         }
     });
 
+    socket.on('leave room', (room) => {
+        socketRooms.delete(socket)
+        socket.leave(room)
+    })
+
     socket.on('disconnect', () => {
         console.log(socket.id + ' disconnected');
         connections--;
@@ -277,8 +289,13 @@ io.sockets.on('connection', (socket) => {
             if (socketRooms.has(socket.id)) {
                 let room = socketRooms.get(socket.id);
                 io.to(room).emit('otherleft', name);
-                rooms.get(room).splice(room.indexOf(name), 1);
-                socketRooms.delete(socket.id);
+                if (rooms.has(room)) {
+                    rooms.get(room).splice(room.indexOf(name), 1);
+                    socketRooms.delete(socket.id);
+                    if (rooms.get(room).length == 0) {
+                        rooms.delete(room)
+                    }
+                }
             }
         }
         console.log(socketNames);
