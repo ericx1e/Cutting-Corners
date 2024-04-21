@@ -16,16 +16,21 @@ app = FastAPI()
 class Drawing(BaseModel):
     base64_rep: str
 
+class
+
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
+
+# @app.post("/api/v1/")
+# async def store_player_imgs()
 
 @app.post("/api/v1/drawing")
 async def classify_drawing(drawing: Drawing):
     model = ImageClassifier()
     model.load_state_dict(torch.load("Model/model.pth"))
     model.eval()
-    preprocessed_img = torch.tensor(compress_doodle(image_base64)).float()
+    preprocessed_img = torch.tensor(compress_doodle(drawing.base64_rep)).float()
     prediction = model.predict(preprocessed_img)
     return prediction
 
