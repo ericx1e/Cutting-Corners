@@ -37,6 +37,7 @@ function setup() {
     canvas.position(0, 0)
 
     startButtonY = height
+    instructionsY = -height / 2
     boardstartX = width / 2 - whiteBoardWidth / 2
     boardstartY = height / 2 - whiteBoardHeight / 2
 }
@@ -99,6 +100,8 @@ function drawBackground() {
 }
 
 let startButtonY
+let instructionsY
+let isInstructions = false
 function drawHomePage() {
     //background(backgroundColor)
     drawBackground()
@@ -115,14 +118,54 @@ function drawHomePage() {
         button("Join Game!", width / 2, startButtonY, width / 4, width / 20, () => {
             screen = "join"
         })
+        button("How To", width * 8.5 / 10, startButtonY, width / 4, width / 20, () => {
+            isInstructions = true
+        })
+        // button("Join Game!", width * 3 / 4, startButtonY, width / 4, width / 20, () => {
+        //     screen = "join"
+        // })
     } else {
         button("Join Game!", width / 2, height * 3 / 4, width / 4, width / 20, () => {
             screen = "join"
         })
+        button("How To", width * 8.5 / 10, startButtonY, width / 4, width / 20, () => {
+            isInstructions = true
+        })
+
+        if (isInstructions) {
+            instructionsY = lerp(instructionsY, height / 2, 0.1)
+        } else {
+            instructionsY = lerp(instructionsY, -height / 2, 0.1)
+        }
     }
 
+    noStroke()
+    rectMode(CENTER)
+    fill(255, 200)
+    rect(width / 2, instructionsY, width * 3 / 4, height * 2 / 3, width / 20, width / 20)
+    textSize(width / 40)
+    let txt = `
+    Everyone starts by drawing a picture based on a prompt.
+    Each player’s drawing will be handed to the next player,
+    but with 3/4ths of it hidden, so make sure to be thorough!
+    With a fourth of your drawing as context, the next player 
+    will attempt to fill in the rest of the drawing, but without the prompt. 
+    The drawing will bubble down, with each player adding a quarter,
+    until it’s completely filled in; then, our AI agent will try and 
+    classify your image. See if your drawings can pass!
+
+    (click to close)
+    `;
+    fill(0)
+    text(txt, width / 2, instructionsY)
+
+
+    push()
+    translate(width / 10, height * 9 / 10)
+    rotate(cos(frameCount / 60) / 2 / PI)
     imageMode(CENTER)
-    image(wabbitImg, width / 10, height * 9 / 10)
+    image(wabbitImg, 0, 0)
+    pop()
 
     drawTrail();
     drawCursor();
@@ -369,7 +412,12 @@ function drawEndPage() {
     textOptions(width / 15)
     textWiggle("Let's look at those masterpieces!", width / 2, height / 8, width / 30)
     imageMode(CENTER)
-    image(wabbitImg, width * 9 / 10, height * 9 / 10)
+    push()
+    translate(width * 9 / 10, height * 9 / 10)
+    rotate(cos(frameCount / 60) / 2 / PI)
+    imageMode(CENTER)
+    image(wabbitImg, 0, 0)
+    pop()
     image(finalImages[finalI], width / 2, height / 2, whiteBoardWidth * 2 / 3, whiteBoardHeight * 2 / 3);
     socket.emit('leave room', playerInfo.room)
     playerInfo = { username: null, room: null, prompt: null, index: null, second_round_image: null, third_round_image: null, fourth_round_image: null }
@@ -395,6 +443,9 @@ function drawEndPage() {
 function mousePressed() {
     if (screen == "game" && isOnCanvas()) {
         penDown = true;
+    }
+    if (isInstructions) {
+        isInstructions = false
     }
 }
 
