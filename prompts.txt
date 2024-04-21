@@ -22,5 +22,4 @@ brain
 raccoon
 radio
 rifle
-sea turtle
 sink
