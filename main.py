@@ -50,6 +50,14 @@ async def get_player_imgs(gameid: int, round: int, player_index: int):
     else:
         return "Invalid Game ID"
 
+@app.get("/api/v1/game/remove")
+async def get_player_imgs(gameid: int):
+    if gameid in storage:
+        del storage[gameid]
+        return storage
+    else:
+        return "Invalid Game ID"
+
 
 @app.post("/api/v1/drawing")
 async def classify_drawing(drawing: Drawing):
