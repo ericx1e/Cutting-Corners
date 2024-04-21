@@ -1,4 +1,5 @@
 const fs = require('fs');
+const fetch = require('node-fetch')
 var express = require("express");
 const { log } = require('console');
 var app = express();
@@ -74,6 +75,7 @@ io.sockets.on('connection', (socket) => {
         let name = socketNames.get(socket.id)
         if (rooms.get(room)[0] == name) {
             let p = []
+            console.log(all_prompts)
             while (p.length < maxPlayers) {
                 let e = all_prompts[Math.floor(all_prompts.length * Math.random())]
                 if (!p.includes(e)) {
@@ -82,7 +84,6 @@ io.sockets.on('connection', (socket) => {
             }
             prompts.set(room, p)
             roomImageData.set(room, Array.from(Array.apply(null, Array(maxPlayers)).map(function () { })))
-            console.log(p)
             io.to(room).emit('start game', p)
             io.to(room).emit('begin timer', [Date.now(), Date.now() + drawTime])
         }
@@ -142,6 +143,122 @@ io.sockets.on('connection', (socket) => {
         if (isDone) {
             io.to(room).emit('fourth round', roomImageData.get(room))
             io.to(room).emit('begin timer', [Date.now(), Date.now() + drawTime])
+        }
+    });
+
+    socket.on('fourth round', async (base64Image) => {
+        let room = socketRooms.get(socket.id)
+        let index = rooms.get(room).indexOf(socketNames.get(socket.id))
+        roomImageData.get(room)[(index + 3) % maxPlayers].push(base64Image)
+
+        // Check if room is done
+        let isDone = true
+        for (let i = 0; i < maxPlayers; i++) {
+            if (roomImageData.get(room)[i].length == 3) {
+                isDone = false
+            }
+        }
+
+        if (isDone) {
+            const images = [];
+            const classifications = [];
+
+            const promises = roomImageData.get(room).map(async (ele) => {
+                try {
+                    // First API call to combine images
+                    const combineResponse = await fetch('https://fastapi-production-af2a.up.railway.app/api/v1/drawing/combine', {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify([
+                            { "base64_rep": ele[0] },
+                            { "base64_rep": ele[1] },
+                            { "base64_rep": ele[2] },
+                            { "base64_rep": ele[3] }
+                        ])
+                    });
+                    const combinedjson = await combineResponse.json();
+
+                    // Second API call to process the combined image
+                    const drawResponse = await fetch('https://fastapi-production-af2a.up.railway.app/api/v1/drawing', {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            "base64_rep": combinedjson
+                        })
+                    });
+                    const result = await drawResponse.json();
+
+                    // Store the combined image data and the classification result
+                    images.push("data:image/png;base64," + combinedjson);
+                    classifications.push(result);
+                } catch (error) {
+                    console.error('Error:', error);
+                }
+            });
+
+            // Wait for all promises to resolve
+            await Promise.all(promises);
+
+            // Emit the end screen event after all images and classifications are processed
+            io.to(room).emit('end screen', [images, classifications]);
+
+
+
+            // images = []
+            // classifications = []
+            // roomImageData.get(room).forEach((ele) => {
+
+            //     fetch('https://fastapi-production-af2a.up.railway.app/api/v1/drawing/combine', {
+            //         method: "POST",
+            //         headers: {
+            //             "Content-Type": "application/json"
+            //         },
+            //         body: JSON.stringify(
+            //             [{
+            //                 "base64_rep": ele[0]
+            //             },
+            //             {
+            //                 "base64_rep": ele[1]
+            //             },
+            //             {
+            //                 "base64_rep": ele[2]
+            //             },
+            //             {
+            //                 "base64_rep": ele[3]
+            //             }]
+            //         )
+            //     })
+            //         .then((response) => response.json())
+            //         .then((combinedjson) => {
+            //             fetch('https://fastapi-production-af2a.up.railway.app/api/v1/drawing', {
+            //                 method: "POST",
+            //                 headers: {
+            //                     "Content-Type": "application/json"
+            //                 },
+            //                 body: JSON.stringify({
+            //                     "base64_rep": combinedjson
+            //                 })
+            //             })
+            //                 .then((response) => response.json())
+            //                 .then((result) => {
+            //                     images.push(combinedjson)
+            //                     classifications.push(result)
+            //                 })
+            //                 .catch((error) => {
+            //                     console.error('Error:', error);
+            //                 });
+            //         })
+            //         .catch((error) => {
+            //             console.error('Error:', error);
+            //         });
+            // });
+
+            // io.to(room).emit('end screen', [images, classifications])
+
         }
     });
 

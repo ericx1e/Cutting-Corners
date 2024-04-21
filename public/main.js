@@ -29,6 +29,9 @@ let timerRunning = false
 
 let round = -1
 
+let finalImages = [];
+let finalClassifications = [];
+
 function setup() {
     canvas = createCanvas(window.innerWidth, window.innerHeight)
     canvas.position(0, 0)
@@ -66,6 +69,8 @@ function draw() {
         case "game":
             drawGamePage()
             break
+        case "end":
+            drawEndPage()
     }
     if (message) {
         showMessage()
@@ -84,7 +89,7 @@ let startButtonY
 function drawHomePage() {
     background(backgroundColor)
     textOptions(width / 10)
-    textWiggle('Sketch Box', width / 2, height / 8, width / 10)
+    textWiggle('Sketch Box', width / 2, height / 4, width / 10)
 
     // noStroke()
     if (frameCount < 60) {
@@ -101,6 +106,50 @@ function drawHomePage() {
             screen = "join"
         })
     }
+    drawFrenulum();
+    drawCursor();
+}
+
+let frenulum = [];
+let fLength = 30;
+let fadeDuration = 1000; // fading effect in milliseconds
+let lastFrenulumlUpdateTime;
+
+function drawCursor() {
+    let cursorSize = 10;
+    fill(255); // white
+    noStroke();
+    ellipse(mouseX, mouseY, cursorSize, cursorSize);
+
+    // store cursor position for trail
+    frenulum.push(createVector(mouseX, mouseY));
+
+    // limit trail length
+    if (frenulum.length > fLength) {
+        frenulum.splice(0, 1);
+    }
+}
+
+function drawFrenulum() {
+    for (let i = 1; i < frenulum.length; i++) {
+        let timeElapsed = millis() - lastFrenulumlUpdateTime;
+        let fadeRatio = constrain(timeElapsed / fadeDuration, 0, 1); // fading ratio based on time
+
+        // DEFINITELY NOT about transpacency
+        let JERIC_is_trans = map(i, 0, frenulum.length, 255, 0);
+
+        JERIC_is_trans *= 10 + fadeRatio; // fading effect over time
+
+        if (JERIC_is_trans > 0) {
+            // draw line segment only if JERIC IS TRANS
+            stroke(255, JERIC_is_trans); // draw with adjusted fading alpha
+            strokeWeight(10); // line thickness
+            line(frenulum[i - 1].x, frenulum[i - 1].y, frenulum[i].x, frenulum[i].y); // Draw line segment
+        }
+    }
+
+    // update last frenulum's update time
+    lastFrenulumlUpdateTime = millis();
 }
 
 function drawNamePage() {
@@ -262,6 +311,29 @@ function drawGamePage() {
     }
 }
 
+let currentFinalImageIndex = 0
+let changeInterval = 10 * 1000;
+let lastChangedTime = 0;
+
+function drawEndPage() {
+    background(backgroundColor)
+    textOptions(width / 15)
+    textWiggle("Let's rate those masterpieces!", width / 2, height / 8, width / 30)
+
+    image(finalImages[currentFinalImageIndex], width / 2, height / 2, whiteBoardWidth * 2 / 3, whiteBoardHeight * 2 / 3);
+    text(finalClassifications[currentFinalImageIndex], width / 2, height * 5 / 6)
+
+    // Check if it's time to change the image
+    if (millis() - lastChangedTime > changeInterval) {
+        currentFinalImageIndex++;  // Move to the next image
+        if (currentFinalImageIndex >= finalImages.length) {
+            currentFinalImageIndex = 0;  // Loop back to the first image
+            screen = "home"
+        }
+        lastChangedTime = millis();  // Reset the timer
+    }
+}
+
 function mousePressed() {
     if (screen == "game" && isOnCanvas()) {
         penDown = true;
@@ -309,8 +381,11 @@ function button(txt, x, y, w, h, onClick) {
     fill(255)
     text(txt, x, y)
 
-    if (mouseIsPressed && mouseX > x - w / 2 && mouseX < x + w / 2 && mouseY > y - h / 2 && mouseY < y + h / 2) {
-        onClick()
+    if (mouseX > x - w / 2 && mouseX < x + w / 2 && mouseY > y - h / 2 && mouseY < y + h / 2) {
+
+        if (mouseIsPressed) {
+            onClick()
+        }
     }
 }
 
@@ -444,12 +519,22 @@ socket.on('fourth round', (images) => {
         )
         playerInfo.fourth_round_image.push(arr)
     })
-
     // index = roomInfo.players.indexOf(playerInfo.username)
     // playerInfo.second_round_image = images[(index + 1) % maxPlayers]
     // playerInfo.third_round_image = loadImage(images[(index + 1) % maxPlayers])
     buffer.background(255);
     round = 4
+});
+
+
+socket.on('end screen', (data) => {
+    finalImages = []
+    data[0].forEach((img) => {
+        finalImages.push(loadImage(img))
+    })
+    finalClassifications = data[1]
+    screen = "end"
+    lastChangedTime = millis();
 });
 
 // socket.on('fourth round', (images) => {
