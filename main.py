@@ -11,6 +11,7 @@ import numpy as np
 import base64
 import io
 from image_classifier import ImageClassifier, reversed_encoding
+import torchvision.transforms as transforms
 
 app = FastAPI()
 
@@ -66,19 +67,18 @@ async def combine_images(drawings: List[Drawing]):
         img = drawings[i].base64_rep
         preprocessed = img[img.find(",")+1:]
         decoded_image = Image.open(BytesIO(base64.b64decode(preprocessed)))
-        if i == 0:
-            decoded_image = decoded_image.resize((600, 600))
-        decoded_images.append(decoded_image)
+        decoded_image_resized = decoded_image.resize((600, 600))
+        decoded_images.append(decoded_image_resized)
 
     total_width = sum(image.width for image in decoded_images[0:2])
     total_height = sum(image.height for image in decoded_images[::2])
 
-    combined_image = Image.new('RGB', (total_width, total_height))
+    combined_image = Image.new('RGB', (1200, 1200))
 
     combined_image.paste(decoded_images[0], (0, 0))
-    combined_image.paste(decoded_images[1], (total_width - decoded_images[1].width, 0))   
-    combined_image.paste(decoded_images[2], (0, total_height - decoded_images[2].height))
-    combined_image.paste(decoded_images[3], (total_width - decoded_images[3].width, total_height - decoded_images[3].height))
+    combined_image.paste(decoded_images[1], (600, 0))
+    combined_image.paste(decoded_images[2], (0, 600))
+    combined_image.paste(decoded_images[3], (600,600))
 
     buffered = BytesIO()
     combined_image.save(buffered, format="JPEG")
