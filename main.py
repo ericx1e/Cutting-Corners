@@ -23,8 +23,8 @@ async def root():
 async def classify_drawing(drawing: Drawing):
     img_matrix = compress_doodle(drawing.base64_rep)
     model = torch.load('model.pth')
-    model.predict(img_matrix)
-    return drawing
+    prediction = model.predict(img_matrix)
+    return prediction
 
 def compress_doodle(image_base64: str):
     image_base64 = image_base64[image_base64.find(",")+1:]
