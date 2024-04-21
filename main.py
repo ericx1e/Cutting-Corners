@@ -11,7 +11,6 @@ import numpy as np
 import base64
 import io
 from image_classifier import ImageClassifier, reversed_encoding
-import torchvision.transforms as transforms
 
 app = FastAPI()
 
