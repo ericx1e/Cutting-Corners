@@ -91,8 +91,8 @@ async def classify_drawing(drawing: Drawing):
     model.load_state_dict(torch.load("Model/model.pth"))
     model.eval()
     preprocessed_img = torch.tensor(compress_doodle(drawing.base64_rep)).float()
-    prediction = model.predict(preprocessed_img)
-    return prediction
+    prediction, prob = model.predict(preprocessed_img)
+    return prediction, prob
 
 def compress_doodle(image_base64: str):
     image_base64 = image_base64[image_base64.find(",")+1:]
