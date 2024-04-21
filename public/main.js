@@ -1,6 +1,6 @@
 
-socket = io.connect('https://floating-earth-49506-74598c9829a7.herokuapp.com/');
-// socket = io.connect('http://localhost:3000/');
+// socket = io.connect('https://floating-earth-49506-74598c9829a7.herokuapp.com/');
+socket = io.connect('http://localhost:3000/');
 const maxStringLength = 7;
 const maxPlayers = 4
 
@@ -52,6 +52,7 @@ function preload() {
     pangolin = loadFont('/assets/fonts/Pangolin/Pangolin-Regular.ttf');
     eraserImg = loadImage('/assets/eraser.png');
     pencilImg = loadImage('/assets/pencil.png');
+    wabbitImg = loadImage('/assets/wabbit.png');
 }
 
 function draw() {
@@ -89,7 +90,7 @@ let startButtonY
 function drawHomePage() {
     background(backgroundColor)
     textOptions(width / 10)
-    textWiggle('Sketch Box', width / 2, height / 4, width / 10)
+    textWiggle('Cutting Corners', width / 2, height / 4, width / 10)
 
     // noStroke()
     if (frameCount < 60) {
@@ -102,10 +103,13 @@ function drawHomePage() {
         })
     } else {
         button("Join Game!", width / 2, height * 3 / 4, width / 4, width / 20, () => {
-            transitioning = true
             screen = "join"
         })
     }
+
+    imageMode(CENTER)
+    image(wabbitImg, width / 10, height * 9 / 10)
+
     drawTrail();
     drawCursor();
 }
@@ -250,10 +254,32 @@ function drawGamePage() {
     let referenceW = width / 10
     let referenceH = width / 10
 
+    let quarterWidth = referenceW;
+    let quarterLength = referenceH;
+
+    let selectedQuarter = round; // Change this variable to select the quarter to colo
+
     if (round == 1) {
         textOptions(width / 20)
         text("Draw a\n" + playerInfo.prompt, width * 8.5 / 10, height / 6)
     } else {
+        noStroke()
+        noFill();
+
+        fill(0, 255, 0, 100); // Green color
+        if (selectedQuarter === 1) {
+            rect(referenceX, referenceY, quarterWidth, quarterLength);
+        } else if (selectedQuarter === 2) {
+            rect(referenceX + quarterWidth, referenceY, quarterWidth, quarterLength);
+        } else if (selectedQuarter === 3) {
+            rect(referenceX, referenceY + quarterLength, quarterWidth, quarterLength);
+        } else if (selectedQuarter === 4) {
+            rect(referenceX + quarterWidth, referenceY + quarterLength, quarterWidth, quarterLength);
+        }
+        // fill(255)
+        // textAlign(CENTER, CENTER)
+        // textSize(referenceW / 5)
+        // text("you are\ndrawing here", referenceX, referenceY)
         let i = (playerInfo.index + round - 1) % maxPlayers
         switch (round) {
             case 2:
@@ -311,7 +337,7 @@ function drawGamePage() {
     }
 }
 
-let currentFinalImageIndex = 0
+let finalI = 0
 let changeInterval = 10 * 1000;
 let lastChangedTime = 0;
 
@@ -319,15 +345,19 @@ function drawEndPage() {
     background(backgroundColor)
     textOptions(width / 15)
     textWiggle("Let's rate those masterpieces!", width / 2, height / 8, width / 30)
-
-    image(finalImages[currentFinalImageIndex], width / 2, height / 2, whiteBoardWidth * 2 / 3, whiteBoardHeight * 2 / 3);
-    text(finalClassifications[currentFinalImageIndex], width / 2, height * 5 / 6)
+    imageMode(CENTER)
+    image(wabbitImg, width * 9 / 10, height * 9 / 10)
+    image(finalImages[finalI], width / 2, height / 2, whiteBoardWidth * 2 / 3, whiteBoardHeight * 2 / 3);
+    let p = actual_prompts[finalI]
+    let guess = finalClassifications[finalI][0]
+    let confidence = Math.floor(finalClassifications[finalI][1] * 100)
+    text(`Actual: ${p}, Guess: ${guess} at ${confidence}%`, width / 2, height * 5 / 6)
 
     // Check if it's time to change the image
     if (millis() - lastChangedTime > changeInterval) {
-        currentFinalImageIndex++;  // Move to the next image
-        if (currentFinalImageIndex >= finalImages.length) {
-            currentFinalImageIndex = 0;  // Loop back to the first image
+        finalI++;  // Move to the next image
+        if (finalI >= finalImages.length) {
+            finalI = 0;  // Loop back to the first image
             screen = "home"
         }
         lastChangedTime = millis();  // Reset the timer
@@ -354,7 +384,7 @@ function isOnCanvas() {
 
 function textWiggle(txt, x, y, size) {
     let len = txt.length
-    let spacing = size / 1.5
+    let spacing = size / 1.7
     textSize(size)
     push()
     translate(x, y)
@@ -533,6 +563,7 @@ socket.on('end screen', (data) => {
         finalImages.push(loadImage(img))
     })
     finalClassifications = data[1]
+    actual_prompts = data[2]
     screen = "end"
     lastChangedTime = millis();
 });

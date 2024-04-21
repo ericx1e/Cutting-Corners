@@ -21,7 +21,7 @@ fs.readFile('prompts.txt', (err, data) => {
 let connections = 0
 
 const maxPlayers = 4
-const drawTime = 10 * 1000 // Millis
+const drawTime = 15 * 1000 // Millis
 
 let rooms = new Map();
 let socketNames = new Map();
@@ -162,8 +162,11 @@ io.sockets.on('connection', (socket) => {
         if (isDone) {
             const images = [];
             const classifications = [];
+            let p = prompts.get(room)
 
             const promises = roomImageData.get(room).map(async (ele) => {
+                console.log(ele[0])
+                console.log(ele[1])
                 try {
                     // First API call to combine images
                     const combineResponse = await fetch('https://fastapi-production-af2a.up.railway.app/api/v1/drawing/combine', {
@@ -204,7 +207,7 @@ io.sockets.on('connection', (socket) => {
             await Promise.all(promises);
 
             // Emit the end screen event after all images and classifications are processed
-            io.to(room).emit('end screen', [images, classifications]);
+            io.to(room).emit('end screen', [images, classifications, p]);
 
 
 
