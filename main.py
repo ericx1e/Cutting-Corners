@@ -16,14 +16,40 @@ app = FastAPI()
 class Drawing(BaseModel):
     base64_rep: str
 
-class
+class Player_and_Drawing(BaseModel):
+    base64_rep: str
+    gameid: int
+    round_number: int
+    player_index: int
 
+
+storage = {
+
+}
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
 
-# @app.post("/api/v1/")
-# async def store_player_imgs()
+@app.post("/api/v1/game")
+async def store_player_imgs(to_store: Player_and_Drawing):
+    if to_store.gameid in storage:
+        game = storage[to_store.gameid]
+        speficplayerarray = game[(to_store.player_index + to_store.round_number) % 4]
+        speficplayerarray.append(to_store.base64_rep)
+    else:
+        storage[to_store.gameid] = [[] for _ in range(4)]
+        print(storage)
+        storage[to_store.gameid][(to_store.player_index + to_store.round_number) % 4] = [to_store.base64_rep]
+    return storage
+
+@app.get("/api/v1/game")
+async def get_player_imgs(gameid: int, round: int, player_index: int):
+    if gameid in storage:
+        game = storage[gameid]
+        return game[(player_index + round) % 4]
+    else:
+        return "Invalid Game ID"
+
 
 @app.post("/api/v1/drawing")
 async def classify_drawing(drawing: Drawing):
