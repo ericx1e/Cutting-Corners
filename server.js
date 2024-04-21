@@ -19,7 +19,7 @@ fs.readFile('prompts.txt', (err, data) => {
 
 let connections = 0
 
-const maxPlayers = 2
+const maxPlayers = 4
 const drawTime = 10 * 1000 // Millis
 
 let rooms = new Map();
