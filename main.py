@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
+from io import BytesIO
 from typing import List
 import uvicorn
 import os
@@ -57,6 +58,29 @@ async def get_player_imgs(gameid: int):
         return storage
     else:
         return "Invalid Game ID"
+
+@app.post("/api/v1/drawing/combine")
+async def combine_images(drawings: List[Drawing]):
+    decoded_images = []
+    for base64_image in drawings:
+        decoded_image = Image.open(BytesIO(base64.b64decode(base64_image)))
+        decoded_images.append(decoded_image)
+
+    total_width = sum(image.width for image in decoded_images[0:2])
+    total_height = sum(image.height for image in decoded_images[::2])
+
+    combined_image = Image.new('RGB', (total_width, total_height))
+
+    combined_image.paste(decoded_images[0], (0, 0))
+    combined_image.paste(decoded_images[1], (total_width - decoded_images[1].width, 0))   
+    combined_image.paste(decoded_images[2], (0, total_height - decoded_images[2].height))
+    combined_image.paste(decoded_images[3], (total_width - decoded_images[3].width, total_height - decoded_images[3].height))
+
+    buffered = BytesIO()
+    combined_image.save(buffered, format="JPEG")
+    base64_combined_image = base64.b64encode(buffered.getvalue()).decode()
+    return base64_combined_image
+# Now you have the base64 representation of the combined image
 
 
 @app.post("/api/v1/drawing")
