@@ -1,6 +1,6 @@
 
-socket = io.connect('https://floating-earth-49506-74598c9829a7.herokuapp.com/');
-// socket = io.connect('http://localhost:3000/');
+//socket = io.connect('https://floating-earth-49506-74598c9829a7.herokuapp.com/');
+socket = io.connect('http://localhost:3000/');
 const maxStringLength = 7;
 const maxPlayers = 4
 
@@ -347,9 +347,7 @@ function drawEndPage() {
     textWiggle("Let's rate those masterpieces!", width / 2, height / 8, width / 30)
     imageMode(CENTER)
     image(wabbitImg, width * 9 / 10, height * 9 / 10)
-    if (finalImages[finalI]) {
-        image(finalImages[finalI], width / 2, height / 2, whiteBoardWidth * 2 / 3, whiteBoardHeight * 2 / 3);
-    }
+    image(finalImages[finalI], width / 2, height / 2, whiteBoardWidth * 2 / 3, whiteBoardHeight * 2 / 3);
     socket.emit('leave room', playerInfo.room)
     playerInfo = { username: null, room: null, prompt: null, index: null, second_round_image: null, third_round_image: null, fourth_round_image: null }
     roomInfo = { players: [] }

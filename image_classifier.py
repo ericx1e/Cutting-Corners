@@ -26,8 +26,7 @@ reversed_encoding = {
         20: 'brain',
         21: 'raccoon',
         22: 'radio',
-        23: 'rifle',
-        24: 'sink'
+        23: 'sink'
     }
 
 
@@ -51,7 +50,7 @@ class ImageClassifier(nn.Module):
             nn.Linear(980, 980),
             nn.ReLU(),
             nn.Dropout(p=.2),
-            nn.Linear(980, 25)
+            nn.Linear(980, 24)
         )
 
     def forward(self, x):
