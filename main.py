@@ -62,10 +62,12 @@ async def get_player_imgs(gameid: int):
 @app.post("/api/v1/drawing/combine")
 async def combine_images(drawings: List[Drawing]):
     decoded_images = []
-    for drawing in drawings:
-        img = drawing.base64_rep
+    for i in range(len(drawings)):
+        img = drawings[i].base64_rep
         preprocessed = img[img.find(",")+1:]
         decoded_image = Image.open(BytesIO(base64.b64decode(preprocessed)))
+        if i == 0:
+            decoded_image = decoded_image.resize((600, 600))
         decoded_images.append(decoded_image)
 
     total_width = sum(image.width for image in decoded_images[0:2])
