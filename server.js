@@ -12,7 +12,7 @@ console.log("Server is running");
 
 var io = require('socket.io')(server, {
     cors: {
-        origin: "http://localhost:8080",
+        origin: "https://cuttingcorners.netlify.app/",
         methods: ["GET", "POST"]
     }
 });
