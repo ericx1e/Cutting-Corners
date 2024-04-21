@@ -1,16 +1,22 @@
 const fs = require('fs');
-const cors = require('cors');
+// const cors = require('cors');
 const fetch = require('node-fetch')
 var express = require("express");
 var app = express();
 var server = app.listen(process.env.PORT || 3000);
 app.use(express.static('public'));
 
-app.use(cors());
+// app.use(cors());
 
 console.log("Server is running");
 
-var io = require('socket.io')(server);
+var io = require('socket.io')(server, {
+    cors: {
+        origin: "http://localhost:8080",
+        methods: ["GET", "POST"]
+    }
+});
+
 
 // var io = socket(server);
 
@@ -23,7 +29,7 @@ fs.readFile('prompts.txt', (err, data) => {
 let connections = 0
 
 const maxPlayers = 4
-const drawTime = 5 * 1000 // Millis
+const drawTime = 15 * 1000 // Millis
 
 let rooms = new Map();
 let socketNames = new Map();
