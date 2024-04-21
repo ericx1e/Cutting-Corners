@@ -1,8 +1,8 @@
 
-socket = io.connect('https://floating-earth-49506-74598c9829a7.herokuapp.com/');
-// socket = io.connect('http://localhost:3000/');
+// socket = io.connect('https://floating-earth-49506-74598c9829a7.herokuapp.com/');
+socket = io.connect('http://localhost:3000/');
 const maxStringLength = 7;
-const maxPlayers = 4
+const maxPlayers = 2
 
 let canvas;
 let playerInfo = { username: null, room: null, prompt: null, index: null, second_round_image: null, third_round_image: null, fourth_round_image: null }
@@ -38,7 +38,7 @@ function setup() {
 
     startButtonY = height
     instructionsY = -height / 2
-    boardstartX = width / 2 - whiteBoardWidth / 2
+    boardstartX = width / 2.5 - whiteBoardWidth / 2
     boardstartY = height / 2 - whiteBoardHeight / 2
 }
 
@@ -303,18 +303,18 @@ function drawGamePage() {
     rect(boardstartX + dropShadowOffset, boardstartY + dropShadowOffset, whiteBoardWidth, whiteBoardHeight)
     image(buffer, boardstartX, boardstartY);
 
-    imgButton(pencilImg, width / 10, height / 3, width / 10, !isErasing, () => {
+    imgButton(pencilImg, width / 10, height / 3, width / 12, !isErasing, () => {
         isErasing = false
     })
 
-    imgButton(eraserImg, width / 10, height * 2 / 3, width / 10, isErasing, () => {
+    imgButton(eraserImg, width / 10, height * 2 / 3, width / 12, isErasing, () => {
         isErasing = true
     })
 
-    let referenceX = width * 8 / 10
-    let referenceY = height / 6
     let referenceW = width / 10
     let referenceH = width / 10
+    let referenceX = width * 7.5 / 10
+    let referenceY = height / 2 - referenceH / 2
 
     let quarterWidth = referenceW;
     let quarterLength = referenceH;
@@ -324,7 +324,7 @@ function drawGamePage() {
     if (round == 1) {
         textOptions(width / 20)
         noStroke()
-        text("Draw a\n" + playerInfo.prompt, width * 8.5 / 10, height / 6)
+        text("Draw a\n" + playerInfo.prompt, referenceX, referenceY)
     } else {
         noStroke()
         noFill();
