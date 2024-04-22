@@ -4,7 +4,7 @@
 socket = io.connect('https://cuttingcorners-7c95b20a5ad9.herokuapp.com/')
 
 const maxStringLength = 7;
-const maxPlayers = 2
+const maxPlayers = 4
 
 let canvas;
 let playerInfo = { username: null, room: null, prompt: null, index: null, second_round_image: null, third_round_image: null, fourth_round_image: null }
