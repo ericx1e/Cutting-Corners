@@ -10,21 +10,7 @@ app.use(express.static('public'));
 
 console.log("Server is running");
 
-var io = require('socket.io')(server, {
-    cors: {
-        origin: function (origin, callback) {
-            const allowedOrigins = ["https://cuttingcorners.netlify.app", "https://main--cuttingcorners.netlify.app"];
-            if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-                callback(null, true);
-            } else {
-                callback(new Error("CORS error"));
-            }
-        },
-        methods: ["GET", "POST"],
-        credentials: true
-    }
-});
-
+var io = require('socket.io')(server);
 
 
 // var io = socket(server);
