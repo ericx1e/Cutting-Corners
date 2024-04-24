@@ -1,10 +1,9 @@
 const fs = require('fs');
 // const cors = require('cors');
 const fetch = require('node-fetch')
-var express = require("express");
-var app = express();
-var server = app.listen(process.env.PORT || 3000);
-app.use(express.static('public'));
+const express = require("express");
+const app = express();
+const server = app.listen(process.env.PORT || 3000);
 
 // app.use(cors());
 
@@ -19,6 +18,7 @@ const io = require('socket.io')(server, {
     }
 });
 
+app.use(express.static('public'));
 
 // var io = socket(server);
 
