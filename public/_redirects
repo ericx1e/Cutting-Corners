@@ -1,1 +1,2 @@
-/api/*  https://your-app-name.herokuapp.com/api/:splat  200
+/api/*  https://cuttingcorners-7c95b20a5ad9.herokuapp.com/api/:splat  200
+/* /index.html 200
