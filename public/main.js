@@ -1,7 +1,7 @@
 
 // socket = io.connect('https://floating-earth-49506-74598c9829a7.herokuapp.com/');
 // socket = io.connect('http://localhost:3000/');
-socket = io.connect('https://cuttingcorners-7c95b20a5ad9.herokuapp.com/')
+// socket = io.connect('https://cuttingcorners-7c95b20a5ad9.herokuapp.com/')
 
 const maxStringLength = 7;
 const maxPlayers = 4
